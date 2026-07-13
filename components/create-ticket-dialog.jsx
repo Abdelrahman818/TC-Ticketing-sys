@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { createTicket, loadAssignableUsers } from '@/lib/tickets';
 import { API_ROUTES, apiRequest, getStoredUser } from '@/config';
 
-const ASSIGNABLE_ROLES = new Set(['supervisor', 'manager', 'owner']);
+const ASSIGNABLE_ROLES = new Set(['supervisor', 'manager', 'controller', 'owner']);
 
 function formatAssigneeLabel(user) {
   const roleLabel = user.role === 'supervisor' ? 'Supervisor' : 'Employee';

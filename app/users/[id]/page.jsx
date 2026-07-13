@@ -11,6 +11,7 @@ const ROLE_OPTIONS = [
   { value: 'employee', label: 'Employee' },
   { value: 'supervisor', label: 'Supervisor' },
   { value: 'manager', label: 'Manager' },
+  { value: 'controller', label: 'Controller' },
   { value: 'owner', label: 'Owner' },
 ];
 
@@ -35,10 +36,10 @@ export default function UserPanelPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const isOwner = currentUser?.role === 'owner';
+  const isController = currentUser?.role === 'controller' || currentUser?.role === 'owner';
 
   useEffect(() => {
-    if (!currentUser || currentUser.role !== 'owner') {
+    if (!currentUser || (currentUser.role !== 'controller' && currentUser.role !== 'owner')) {
       router.replace('/');
       return;
     }
@@ -134,14 +135,14 @@ export default function UserPanelPage() {
     }
   };
 
-  const title = useMemo(() => (isOwner ? 'User Panel' : 'Access denied'), [isOwner]);
+  const title = useMemo(() => (isController ? 'User Panel' : 'Access denied'), [isController]);
 
-  if (!isOwner || loading) {
+  if (!isController || loading) {
     return <div className="p-8 text-center text-slate-500">Loading...</div>;
   }
 
   return (
-    <AuthGuard allowedRoles={['owner']}>
+    <AuthGuard allowedRoles={['controller', 'owner']}>
       <div className="min-h-full bg-[linear-gradient(135deg,#f8fbff_0%,#f7f8fc_100%)] p-6">
         <div className="mx-auto max-w-3xl rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
           <div className="mb-6 flex items-center justify-between gap-3">

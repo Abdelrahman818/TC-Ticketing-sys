@@ -13,8 +13,26 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: 'Task Board',
-  description: 'Simple kanban board for tickets',
+  title: {
+    default: 'TaskBoard | Ticket Management System',
+    template: '%s | TaskBoard',
+  },
+  description: 'TaskBoard helps teams track work, manage ticket workflows, and keep departments aligned with a modern kanban experience.',
+  keywords: ['ticket management', 'kanban board', 'team workflow', 'task tracking', 'department collaboration'],
+  alternates: {
+    canonical: 'https://taskboard.example.com',
+  },
+  openGraph: {
+    title: 'TaskBoard | Ticket Management System',
+    description: 'Manage tickets, monitor progress, and keep your team aligned with a streamlined task board.',
+    type: 'website',
+    siteName: 'TaskBoard',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'TaskBoard | Ticket Management System',
+    description: 'A modern ticketing and workflow platform for fast-moving teams.',
+  },
 };
 
 export default function RootLayout({ children }) {

@@ -12,6 +12,7 @@ const ROLE_OPTIONS = [
   { value: 'employee', label: 'Employee' },
   { value: 'supervisor', label: 'Supervisor' },
   { value: 'manager', label: 'Manager' },
+  { value: 'controller', label: 'Controller' },
   { value: 'owner', label: 'Owner' },
 ];
 
@@ -30,7 +31,7 @@ const emptyForm = {
   isActive: true,
   isDefault: false,
   isFinal: false,
-  visibleToRoles: ['employee', 'supervisor', 'manager', 'owner'],
+  visibleToRoles: ['employee', 'supervisor', 'manager', 'controller', 'owner'],
 };
 
 export default function StagesPage() {
@@ -59,7 +60,7 @@ export default function StagesPage() {
   };
 
   useEffect(() => {
-    if (!user || user.role !== 'owner') {
+    if (!user || (user.role !== 'controller' && user.role !== 'owner')) {
       router.replace('/');
       return;
     }
@@ -72,7 +73,7 @@ export default function StagesPage() {
     setForm({
       ...emptyForm,
       key: '',
-      visibleToRoles: ['employee', 'supervisor', 'manager', 'owner'],
+      visibleToRoles: ['employee', 'supervisor', 'manager', 'controller', 'owner'],
     });
     setError('');
     setDialogOpen(true);
@@ -163,12 +164,12 @@ export default function StagesPage() {
 
   const orderedStages = [...stages].sort((a, b) => (a.order || 0) - (b.order || 0));
 
-  if (!user || user.role !== 'owner' || loading) {
+  if (!user || (user.role !== 'controller' && user.role !== 'owner') || loading) {
     return <div className="p-8 text-center text-slate-500">Loading...</div>;
   }
 
   return (
-    <AuthGuard allowedRoles={['owner']}>
+    <AuthGuard allowedRoles={['controller', 'owner']}>
       <div className="min-h-full bg-[linear-gradient(135deg,#f8fbff_0%,#f7f8fc_100%)] p-6">
         <div className="mx-auto max-w-6xl rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -215,7 +216,7 @@ export default function StagesPage() {
                       <td className="px-4 py-3">{stage.key}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-2">
-                          {(stage.visibleToRoles || ['employee', 'supervisor', 'manager', 'owner']).map((role) => (
+                          {(stage.visibleToRoles || ['employee', 'supervisor', 'manager', 'controller', 'owner']).map((role) => (
                             <span key={role} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                               {role}
                             </span>

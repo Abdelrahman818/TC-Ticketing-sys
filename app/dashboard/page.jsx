@@ -172,7 +172,7 @@ export default function DashboardPage() {
   const [customTo, setCustomTo]       = useState('');
   const [appliedRange, setAppliedRange] = useState(() => getDateRange('month'));
 
-  const isOwnerOrManager = user?.role === 'owner' || user?.role === 'manager';
+  const isControllerOrManager = (user?.role === 'controller' || user?.role === 'owner') || user?.role === 'manager';
   const isSupervisor     = user?.role === 'supervisor';
 
   const handlePeriodChange = (newPeriod) => {
@@ -203,7 +203,7 @@ export default function DashboardPage() {
       try {
         const calls = [apiRequest(buildUrl(API_ROUTES.dashboard.me, dateParams))];
 
-        if (isOwnerOrManager) {
+        if (isControllerOrManager) {
           calls.push(
             apiRequest(buildUrl(API_ROUTES.dashboard.system, dateParams)),
             apiRequest(buildUrl(API_ROUTES.dashboard.departments, dateParams)),
@@ -219,7 +219,7 @@ export default function DashboardPage() {
 
         setMyData(results[0]?.value?.data ?? null);
 
-        if (isOwnerOrManager) {
+        if (isControllerOrManager) {
           setSystemData(results[1]?.value?.data ?? null);
           setDeptData(results[2]?.value?.data?.departments ?? null);
           setSupervisorData(results[3]?.value?.data?.supervisors ?? null);
@@ -237,7 +237,7 @@ export default function DashboardPage() {
 
     void load();
     return () => { isMounted = false; };
-  }, [user, dateParams, isOwnerOrManager, isSupervisor]);
+  }, [user, dateParams, isControllerOrManager, isSupervisor]);
 
   function handleApplyCustom() {
     if (!customFrom || !customTo) return;
@@ -325,8 +325,8 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* ── System overview (owner / manager) ── */}
-        {isOwnerOrManager && systemData && (
+        {/* ── System overview (controller / manager) ── */}
+        {isControllerOrManager && systemData && (
           <section>
             <SectionTitle icon={ShieldCheck} title="System Overview" color="text-violet-600" />
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -340,7 +340,7 @@ export default function DashboardPage() {
 
             <div className="mt-4 grid gap-3 sm:grid-cols-4">
               {[
-                { role: 'Owners',      count: systemData.users?.owners,      color: 'bg-violet-100 text-violet-700' },
+                { role: 'Controllers',  count: systemData.users?.controllers, color: 'bg-violet-100 text-violet-700' },
                 { role: 'Managers',    count: systemData.users?.managers,     color: 'bg-blue-100 text-blue-700' },
                 { role: 'Supervisors', count: systemData.users?.supervisors,  color: 'bg-amber-100 text-amber-700' },
                 { role: 'Employees',   count: systemData.users?.employees,    color: 'bg-emerald-100 text-emerald-700' },
@@ -354,8 +354,8 @@ export default function DashboardPage() {
           </section>
         )}
 
-        {/* ── Department breakdown (owner / manager) ── */}
-        {isOwnerOrManager && deptData && deptData.length > 0 && (
+        {/* ── Department breakdown (controller / manager) ── */}
+        {isControllerOrManager && deptData && deptData.length > 0 && (
           <section>
             <SectionTitle icon={Building2} title="Department Breakdown" color="text-emerald-600" />
             <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
@@ -398,8 +398,8 @@ export default function DashboardPage() {
           </section>
         )}
 
-        {/* ── Supervisor leaderboard (owner / manager) ── */}
-        {isOwnerOrManager && supervisorData && supervisorData.length > 0 && (
+        {/* ── Supervisor leaderboard (controller / manager) ── */}
+        {isControllerOrManager && supervisorData && supervisorData.length > 0 && (
           <section>
             <SectionTitle icon={Users} title="Supervisor Teams" color="text-amber-600" />
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -437,8 +437,8 @@ export default function DashboardPage() {
           </section>
         )}
 
-        {/* ── Manager leaderboard (owner only) ── */}
-        {user?.role === 'owner' && managerData && managerData.length > 0 && (
+        {/* ── Manager leaderboard (controller only) ── */}
+        {(user?.role === 'controller' || user?.role === 'owner') && managerData && managerData.length > 0 && (
           <section>
             <SectionTitle icon={ShieldCheck} title="Manager Departments" color="text-violet-600" />
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -536,7 +536,7 @@ export default function DashboardPage() {
             <Link href="/new-ticket" className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 transition">
               + New Ticket
             </Link>
-            {user?.role === 'owner' && (
+            {(user?.role === 'controller' || user?.role === 'owner') && (
               <Link href="/departments" className="rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-700 hover:bg-violet-100 transition">
                 Manage Departments
               </Link>

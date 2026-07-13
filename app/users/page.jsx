@@ -28,7 +28,7 @@ export default function UsersPage() {
   };
 
   useEffect(() => {
-    if (!user || user.role !== 'owner') {
+    if (!user || (user.role !== 'controller' && user.role !== 'owner')) {
       router.replace('/');
       return;
     }
@@ -36,12 +36,12 @@ export default function UsersPage() {
     void loadUsers();
   }, [user, router]);
 
-  if (!user || user.role !== 'owner' || loading) {
+  if (!user || (user.role !== 'controller' && user.role !== 'owner') || loading) {
     return <div className="p-8 text-center text-slate-500">Loading...</div>;
   }
 
   return (
-    <AuthGuard allowedRoles={['owner']}>
+    <AuthGuard allowedRoles={['controller', 'owner']}>
       <div className="min-h-full bg-[linear-gradient(135deg,#f8fbff_0%,#f7f8fc_100%)] p-6">
         <div className="mx-auto max-w-6xl rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
           <div className="mb-6 flex items-center justify-between gap-3">

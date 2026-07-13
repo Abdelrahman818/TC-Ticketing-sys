@@ -10,6 +10,7 @@ const ROLE_OPTIONS = [
   { value: 'employee', label: 'Employee' },
   { value: 'supervisor', label: 'Supervisor' },
   { value: 'manager', label: 'Manager' },
+  { value: 'controller', label: 'Controller' },
   { value: 'owner', label: 'Owner' },
 ];
 
@@ -71,7 +72,7 @@ export default function Signup() {
   };
 
   return (
-    <AuthGuard allowedRoles={['owner']}>
+    <AuthGuard allowedRoles={['controller', 'owner']}>
       <div className="flex min-h-screen items-center justify-center bg-[linear-gradient(135deg,#eef2ff_0%,#f8fafc_100%)] px-4">
         <div className="w-full max-w-md rounded-3xl border border-slate-200/80 bg-white p-8 shadow-[0_25px_80px_rgba(15,23,42,0.08)]">
           <div className="mb-8 text-center">

@@ -31,7 +31,7 @@ export default function DepartmentsPage() {
   };
 
   useEffect(() => {
-    if (!user || user.role !== 'owner') {
+    if (!user || (user.role !== 'controller' && user.role !== 'owner')) {
       router.replace('/');
       return;
     }
@@ -78,7 +78,7 @@ export default function DepartmentsPage() {
     }
   };
 
-  if (!user || user.role !== 'owner' || loading) {
+  if (!user || (user.role !== 'controller' && user.role !== 'owner') || loading) {
     return <div className="p-8 text-center text-slate-500">Loading...</div>;
   }
 

@@ -34,14 +34,14 @@ function TicketDetailContent() {
     priority: 'medium',
   });
 
-  const isOwner = user?.role === 'owner';
+  const isController = user?.role === 'controller' || user?.role === 'owner';
   const isManager = user?.role === 'manager';
   const isSupervisor = user?.role === 'supervisor';
   const isEmployee = user?.role === 'employee';
 
-  const canDelete = isOwner;
-  const canEdit = isOwner || isManager || isSupervisor || (isEmployee && ticket && String(ticket.assignedUserId?._id || ticket.assignedUserId || '') === String(user?._id || user?.id || ''));
-  const canAssign = isOwner || isManager || isSupervisor;
+  const canDelete = isController;
+  const canEdit = isController || isManager || isSupervisor || (isEmployee && ticket && String(ticket.assignedUserId?._id || ticket.assignedUserId || '') === String(user?._id || user?.id || ''));
+  const canAssign = isController || isManager || isSupervisor;
 
   const formatAssigneeLabel = (assignee) => {
     const roleLabel = assignee.role === 'supervisor' ? 'Supervisor' : 'Employee';
@@ -222,12 +222,13 @@ function TicketDetailContent() {
                   const role = comment.authorId?.role;
                   const initials = name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
                   const ROLE_COLORS = {
+                    controller: 'bg-violet-100 text-violet-700',
                     owner: 'bg-violet-100 text-violet-700',
                     manager: 'bg-blue-100 text-blue-700',
                     supervisor: 'bg-amber-100 text-amber-700',
                     employee: 'bg-emerald-100 text-emerald-700',
                   };
-                  const avatarColor = role === 'owner' ? 'bg-violet-600' : role === 'manager' ? 'bg-blue-600' : role === 'supervisor' ? 'bg-amber-500' : 'bg-emerald-600';
+                  const avatarColor = role === 'controller' || role === 'owner' ? 'bg-violet-600' : role === 'manager' ? 'bg-blue-600' : role === 'supervisor' ? 'bg-amber-500' : 'bg-emerald-600';
                   return (
                     <div key={comment._id || comment.id} className="flex gap-3 group">
                       {/* Avatar */}

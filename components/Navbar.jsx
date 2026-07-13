@@ -94,7 +94,7 @@ export function Navbar({ searchQuery, onSearchChange }) {
                       </div>
                     </Link>
 
-                    {user.role === 'owner' && (
+                    {(user.role === 'controller' || user.role === 'owner') && (
                       <>
                         <Link
                           href="/signup"
