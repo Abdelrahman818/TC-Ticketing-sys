@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { createTicket, loadAssignableUsers } from '@/lib/tickets';
+import { createTicket, loadAssignableUsers, uploadTicketPhoto } from '@/lib/tickets';
 import { API_ROUTES, apiRequest, getStoredUser } from '@/config';
 
 const ASSIGNABLE_ROLES = new Set(['supervisor', 'manager', 'controller', 'owner']);
@@ -24,6 +24,8 @@ export default function NewTicketPage() {
     assignedDepartmentId: '',
     assignedUserId: '',
   });
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoCaption, setPhotoCaption] = useState('');
 
   const canAssign = ASSIGNABLE_ROLES.has(user?.role);
 
@@ -73,8 +75,11 @@ export default function NewTicketPage() {
     event.preventDefault();
 
     try {
-      await createTicket(form);
-      window.location.href = '/';
+      const ticket = await createTicket(form);
+      if (ticket?.id && photoFile) {
+        await uploadTicketPhoto(ticket.id, photoFile, photoCaption);
+      }
+      window.location.href = `/ticket-details?id=${ticket?.id}`;
     } catch (error) {
       console.error('Unable to create ticket', error);
     }
@@ -143,6 +148,24 @@ export default function NewTicketPage() {
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Description</label>
             <textarea className="min-h-32 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none" value={form.description} onChange={(e) => handleChange('description', e.target.value)} required />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Photo</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
+              className="w-full text-sm text-slate-700"
+            />
+            <input
+              type="text"
+              placeholder="Photo caption (optional)"
+              value={photoCaption}
+              onChange={(e) => setPhotoCaption(e.target.value)}
+              className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none"
+            />
+            <p className="mt-1 text-xs text-slate-500">You can attach one image when creating the ticket; it will upload after ticket creation.</p>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">

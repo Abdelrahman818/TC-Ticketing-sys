@@ -1,15 +1,16 @@
 const DEFAULT_API_BASE_URL = 'http://localhost:5000';
 
 const getApiBaseUrl = () => {
+  const browserBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
   if (typeof window !== 'undefined') {
-    return process.env.NEXT_PUBLIC_API_BASE_URL || DEFAULT_API_BASE_URL;
+    return browserBaseUrl;
   }
 
-  return process.env.NEXT_PUBLIC_API_BASE_URL || DEFAULT_API_BASE_URL;
+  return process.env.NEXT_PUBLIC_API_BASE_URL || '';
 };
 
-export const BASE_API_URL = getApiBaseUrl().replace(/\/$/, '');
-export const API_BASE_URL = `${BASE_API_URL}/api`;
+const BASE_API_URL = getApiBaseUrl().replace(/\/$/, '');
+export const API_BASE_URL = BASE_API_URL ? `${BASE_API_URL}/api` : '/api';
 export const AUTH_STORAGE_KEY = 'ticketApiToken';
 export const USER_STORAGE_KEY = 'ticketUser';
 
@@ -31,6 +32,8 @@ export const API_ROUTES = {
     assign: (id) => `${API_BASE_URL}/tickets/${id}/assign`,
     archive: (id) => `${API_BASE_URL}/tickets/${id}/archive`,
     comments: (id) => `${API_BASE_URL}/tickets/${id}/comments`,
+    photos: (id) => `${API_BASE_URL}/tickets/${id}/photos`,
+    photo: (ticketId, photoId) => `${API_BASE_URL}/tickets/${ticketId}/photos/${photoId}`,
   },
   users: {
     list: `${API_BASE_URL}/users`,
@@ -161,6 +164,9 @@ export async function apiRequest(endpoint, options = {}) {
 
   if (response.status === 401 && !options._retry) {
     clearStoredAuth();
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
     throw new Error(payload?.message || 'Unauthorized');
   }
 
