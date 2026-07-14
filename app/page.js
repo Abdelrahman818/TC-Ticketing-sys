@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import { KanbanBoard } from '@/components/kanban-board';
 import { Actionbar } from '@/components/Actionbar';
+import { AuthGuard } from '@/components/auth-guard';
 import { getTicketSummary, loadTickets } from '@/lib/tickets';
 
-export default function Home() {
+function DashboardContent() {
   const [tickets, setTickets] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [summary, setSummary] = useState({});
@@ -43,5 +44,13 @@ export default function Home() {
         <KanbanBoard searchQuery={searchQuery} />
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <AuthGuard>
+      <DashboardContent />
+    </AuthGuard>
   );
 }
