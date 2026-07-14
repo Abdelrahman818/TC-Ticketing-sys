@@ -56,7 +56,7 @@ export default function CreateUserPage() {
       };
 
       const res = await apiRequest(
-        API_ROUTES.users.list,
+        API_ROUTES.auth.register,
         { method: 'POST', body: payload }
       );
 
