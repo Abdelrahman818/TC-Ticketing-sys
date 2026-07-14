@@ -69,9 +69,7 @@ export default function CreateUserPage() {
       setName('');
       setRole('employee');
       setDept('');
-
-      // Redirect after 2 seconds
-      setTimeout(() => router.replace('/users'), 2000);
+      
     } catch (err) {
       const message = err?.message || 'Failed to create user. Please try again.';
       setError(message);
