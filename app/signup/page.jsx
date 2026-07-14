@@ -56,7 +56,7 @@ export default function CreateUserPage() {
       };
 
       const res = await apiRequest(
-        'http://localhost:5000/api/users',
+        API_ROUTES.departments.list,
         { method: 'POST', body: payload }
       );
 
