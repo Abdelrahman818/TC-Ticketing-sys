@@ -10,6 +10,11 @@ const nextConfig = {
   experimental: {
     externalDir: true,
   },
+  turbopack: {
+    resolveAlias: {
+      '@backend': path.join(__dirname, '../API'),
+    },
+  },
   images: {
     remotePatterns: [
       {
