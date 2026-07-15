@@ -124,10 +124,6 @@ function TicketDetailContent() {
     return <div className="p-8 text-center text-muted-foreground">Invalid ticket ID</div>;
   }
 
-  if (!ticket) {
-    return <div className="p-8 text-center text-red-500">Failed to load ticket</div>;
-  }
-
   const handleSave = async () => {
     const changes = {};
     if (formData.title !== ticket.title) changes.title = formData.title;
