@@ -19,7 +19,7 @@ function TicketDetailContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
   const ticketId = id || null;
-  const [ticket, setTicket] = useState(null);
+  const [ticket, setTicket] = useState({});
   const [statusOptions, setStatusOptions] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [assignableUsers, setAssignableUsers] = useState([]);
