@@ -29,6 +29,7 @@ export const API_ROUTES = {
   },
   tickets: {
     list: `${API_BASE_URL}/tickets`,
+    events: `${API_BASE_URL}/tickets/events`,
     byId: (id) => `${API_BASE_URL}/tickets/${id}`,
     status: (id) => `${API_BASE_URL}/tickets/${id}/status`,
     assign: (id) => `${API_BASE_URL}/tickets/${id}/assign`,
