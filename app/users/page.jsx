@@ -14,7 +14,7 @@ export default function UsersPage() {
   const router = useRouter();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(() => getStoredUser());
+  const user = getStoredUser();
 
   const loadUsers = async () => {
     try {

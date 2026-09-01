@@ -157,7 +157,7 @@ function PeriodSelector({ period, setPeriod, customFrom, setCustomFrom, customTo
 
 /* ─── Main page ──────────────────────────────────────────── */
 export default function DashboardPage() {
-  const [user, setUser]               = useState(() => getStoredUser());
+  const user = getStoredUser();
   const [myData, setMyData]           = useState(null);
   const [systemData, setSystemData]   = useState(null);
   const [deptData, setDeptData]       = useState(null);

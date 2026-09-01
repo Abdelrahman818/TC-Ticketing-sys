@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, LayoutDashboard, Building2, UserPlus, Users as UsersIcon, Layers3 } from 'lucide-react';
+import { ChevronDown, LayoutDashboard, Building2, UserPlus, Users as UsersIcon, Layers3, MessageCircle } from 'lucide-react';
 import { getStoredUser, logoutUser } from '@/config';
 
 export function Navbar({ searchQuery, onSearchChange }) {
@@ -93,6 +93,22 @@ export function Navbar({ searchQuery, onSearchChange }) {
                         <p className="text-[10px] text-slate-400">Analytics &amp; overview</p>
                       </div>
                     </Link>
+
+                    {(user.role === 'owner' || user.role === 'manager') && (
+                      <Link
+                        href="/whatsapp"
+                        onClick={() => setMoreOpen(false)}
+                        className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-700 hover:bg-green-50 hover:text-green-700 transition-colors group"
+                      >
+                        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-green-100 text-green-600 group-hover:bg-green-200 transition-colors">
+                          <MessageCircle className="h-3.5 w-3.5" />
+                        </span>
+                        <div>
+                          <p className="font-medium">WhatsApp</p>
+                          <p className="text-[10px] text-slate-400">Scan QR code</p>
+                        </div>
+                      </Link>
+                    )}
 
                     {(user.role === 'controller' || user.role === 'owner') && (
                       <>

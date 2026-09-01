@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_ROUTES, apiRequest, getStoredUser } from '@/config';
 import { AuthGuard } from '@/components/auth-guard';
@@ -36,7 +36,7 @@ const emptyForm = {
 
 export default function StagesPage() {
   const router = useRouter();
-  const [user, setUser] = useState(() => getStoredUser());
+  const user = getStoredUser();
   const [stages, setStages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);

@@ -49,7 +49,7 @@ export function AuthGuard({ children, allowedRoles = [] }) {
 
         setReady(true);
         setIsAuthorized(true);
-      } catch (error) {
+      } catch {
         if (isMounted) {
           clearStoredAuth();
           setReady(true);

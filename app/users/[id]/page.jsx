@@ -19,7 +19,7 @@ export default function UserPanelPage() {
   const router = useRouter();
   const params = useParams();
   const userId = params?.id;
-  const [currentUser, setCurrentUser] = useState(() => getStoredUser());
+  const [currentUser] = useState(() => getStoredUser());
   const [form, setForm] = useState({
     name: '',
     email: '',

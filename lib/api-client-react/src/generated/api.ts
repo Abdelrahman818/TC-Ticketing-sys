@@ -36,7 +36,8 @@ type AwaitedInput<T> = PromiseLike<T> | T;
       type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+// eslint-disable-next-line no-unused-vars
+type SecondParameter<T> = T extends (...args: infer Parameters) => unknown ? Parameters[1] : never;
 
 
 
@@ -582,4 +583,3 @@ export const useDeleteTicket = <TError = ErrorType<void>,
       > => {
       return useMutation(getDeleteTicketMutationOptions(options));
     }
-

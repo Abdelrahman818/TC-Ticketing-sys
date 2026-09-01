@@ -1,12 +1,7 @@
 const DEFAULT_API_BASE_URL = 'http://localhost:5000';
 
 const getApiBaseUrl = () => {
-  const browserBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
-  if (typeof window !== 'undefined') {
-    return browserBaseUrl;
-  }
-
-  return process.env.NEXT_PUBLIC_API_BASE_URL || '';
+  return process.env.NEXT_PUBLIC_API_BASE_URL || DEFAULT_API_BASE_URL;
 };
 
 const BASE_API_URL = getApiBaseUrl().replace(/\/$/, '');
@@ -25,6 +20,13 @@ export const API_ROUTES = {
     me: `${API_BASE_URL}/auth/me`,
     logout: `${API_BASE_URL}/auth/logout`,
   },
+  whatsapp: {
+    status: `${API_BASE_URL}/whatsapp/status`,
+    qr: `${API_BASE_URL}/whatsapp/qr`,
+    connect: `${API_BASE_URL}/whatsapp/connect`,
+    logout: `${API_BASE_URL}/whatsapp/logout`,
+    sendMessage: (ticketId) => `${API_BASE_URL}/whatsapp/tickets/${ticketId}/messages`,
+  },
   tickets: {
     list: `${API_BASE_URL}/tickets`,
     byId: (id) => `${API_BASE_URL}/tickets/${id}`,
@@ -32,6 +34,7 @@ export const API_ROUTES = {
     assign: (id) => `${API_BASE_URL}/tickets/${id}/assign`,
     archive: (id) => `${API_BASE_URL}/tickets/${id}/archive`,
     comments: (id) => `${API_BASE_URL}/tickets/${id}/comments`,
+    whatsappConversation: (id) => `${API_BASE_URL}/tickets/${id}/whatsapp-conversation`,
     photos: (id) => `${API_BASE_URL}/tickets/${id}/photos`,
     photo: (ticketId, photoId) => `${API_BASE_URL}/tickets/${ticketId}/photos/${photoId}`,
   },
@@ -87,7 +90,7 @@ export const getStoredUser = () => {
 
   try {
     return JSON.parse(raw);
-  } catch (error) {
+  } catch {
     return null;
   }
 };
@@ -136,7 +139,7 @@ async function resolveAuthToken() {
 }
 
 export async function apiRequest(endpoint, options = {}) {
-  const { body, headers, _retry, ...requestOptions } = options;
+  const { body, headers, ...requestOptions } = options;
   const url = endpoint;
   let authToken = getStoredToken();
 
@@ -161,7 +164,6 @@ export async function apiRequest(endpoint, options = {}) {
   });
 
   const payload = await response.json().catch(() => null);
-
   if (response.status === 401 && !options._retry) {
     clearStoredAuth();
     if (typeof window !== 'undefined') {

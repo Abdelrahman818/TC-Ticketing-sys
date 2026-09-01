@@ -7,7 +7,6 @@ import { AuthGuard } from '@/components/auth-guard';
 import { getTicketSummary, loadTickets } from '@/lib/tickets';
 
 function DashboardContent() {
-  const [tickets, setTickets] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [summary, setSummary] = useState({});
 
@@ -18,12 +17,10 @@ function DashboardContent() {
       try {
         const items = await loadTickets();
         if (isMounted) {
-          setTickets(items);
           setSummary(getTicketSummary(items));
         }
-      } catch (error) {
+      } catch {
         if (isMounted) {
-          setTickets([]);
           setSummary({});
         }
       }

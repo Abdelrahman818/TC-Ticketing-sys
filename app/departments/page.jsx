@@ -12,7 +12,7 @@ export default function DepartmentsPage() {
   const router = useRouter();
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(() => getStoredUser());
+  const user = getStoredUser();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingDept, setEditingDept] = useState(null);

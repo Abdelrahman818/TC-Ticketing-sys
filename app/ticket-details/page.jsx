@@ -1,7 +1,7 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { Suspense, useCallback, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { API_ROUTES, apiRequest, getStoredUser } from '@/config';
 import { assignTicket, changeTicketStatus, deleteTicket, getTicketById, loadAssignableUsers, updateTicket, uploadTicketPhoto, deleteTicketPhoto } from '@/lib/tickets';
@@ -16,6 +16,7 @@ const PRIORITY_OPTIONS = [
 ];
 
 function TicketDetailContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
   const ticketId = id || null;
@@ -24,9 +25,14 @@ function TicketDetailContent() {
   const [departments, setDepartments] = useState([]);
   const [assignableUsers, setAssignableUsers] = useState([]);
   const [comments, setComments] = useState([]);
+  const [whatsappMessages, setWhatsappMessages] = useState([]);
+  const [whatsappStatus, setWhatsappStatus] = useState(null);
+  const [whatsappError, setWhatsappError] = useState('');
   const [newComment, setNewComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
-  const [user, setUser] = useState(() => getStoredUser());
+  const [ticketComment, setTicketComment] = useState('');
+  const [submittingTicketComment, setSubmittingTicketComment] = useState(false);
+  const user = getStoredUser();
   const [photoFile, setPhotoFile] = useState(null);
   const [photoCaption, setPhotoCaption] = useState('');
   const [photoUploading, setPhotoUploading] = useState(false);
@@ -45,6 +51,7 @@ function TicketDetailContent() {
 
   const canDelete = isController;
   const canEdit = isController || isManager || isSupervisor || (isEmployee && ticket && String(ticket.assignedUserId?._id || ticket.assignedUserId || '') === String(user?._id || user?.id || ''));
+  const isWhatsappTicket = ticket?.type === 'whatsapp';
   const canAssign = isController || isManager || isSupervisor;
 
   const formatAssigneeLabel = (assignee) => {
@@ -62,6 +69,37 @@ function TicketDetailContent() {
       console.error('Failed to load comments', error);
     }
   };
+
+  const loadWhatsappConversation = useCallback(async () => {
+    if (!ticketId) return;
+    const response = await apiRequest(API_ROUTES.tickets.whatsappConversation(ticketId));
+    setWhatsappMessages(response?.data?.conversation?.messages || []);
+  }, [ticketId]);
+
+  useEffect(() => {
+    if (!isWhatsappTicket || !ticketId) {
+      return undefined;
+    }
+
+    const loadWhatsappState = async () => {
+      try {
+        const statusResponse = await apiRequest(API_ROUTES.whatsapp.status);
+        setWhatsappStatus(statusResponse?.data?.whatsapp || null);
+      } catch (error) {
+        setWhatsappStatus({ state: 'error', error: error.message });
+      }
+
+      try {
+        await loadWhatsappConversation();
+      } catch (error) {
+        console.error('Failed to load WhatsApp conversation', error);
+      }
+    };
+
+    void loadWhatsappState();
+    const interval = window.setInterval(loadWhatsappState, 3000);
+    return () => window.clearInterval(interval);
+  }, [isWhatsappTicket, ticketId, loadWhatsappConversation]);
 
   useEffect(() => {
     let isMounted = true;
@@ -101,6 +139,10 @@ function TicketDetailContent() {
         statusId: currentTicket.statusId,
         priority: currentTicket.priority,
       });
+      const users = await loadAssignableUsers(currentTicket.assignedDepartmentId?._id || currentTicket.assignedDepartmentId || null);
+      if (isMounted) {
+        setAssignableUsers(users);
+      }
       
       // Load comments
       try {
@@ -152,7 +194,30 @@ function TicketDetailContent() {
 
   const handleDelete = async () => {
     await deleteTicket(ticket.id);
-    setTicket(null);
+    router.replace('/');
+  };
+
+  const handleSendWhatsappMessage = async () => {
+    const body = newComment.trim();
+    if (!body || submittingComment) {
+      return;
+    }
+
+    setSubmittingComment(true);
+    setWhatsappError('');
+    try {
+      await apiRequest(API_ROUTES.whatsapp.sendMessage(ticketId), {
+        method: 'POST',
+        body: { body },
+      });
+      setNewComment('');
+      await loadWhatsappConversation();
+    } catch (error) {
+      setWhatsappError(error.message || 'Unable to send WhatsApp message');
+      console.error('Failed to send WhatsApp message', error);
+    } finally {
+      setSubmittingComment(false);
+    }
   };
 
   const handleUploadPhoto = async () => {
@@ -215,25 +280,94 @@ function TicketDetailContent() {
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-          <div className="space-y-4 rounded-lg border border-border bg-card p-5">
-            <label className="block text-sm font-medium text-slate-700">Title</label>
-            <input
-              className="w-full rounded border border-border bg-background px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed transition"
-              value={formData.title}
-              onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-              disabled={!canEdit}
-            />
-            <label className="block text-sm font-medium text-slate-700">Description</label>
-            <textarea
-              className="min-h-40 w-full rounded border border-border bg-background px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed transition"
-              value={formData.description}
-              onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-              disabled={!canEdit}
-            />
-          </div>
+        {isWhatsappTicket && (
+          <section className="rounded-lg border border-green-200 bg-green-50/60 p-5">
+            <div className="mb-4 flex items-center gap-2 text-green-700">
+              <MessageSquare className="h-4 w-4" />
+              <h2 className="text-sm font-semibold uppercase tracking-[0.12em]">WhatsApp request</h2>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-green-700/70">Name</p><p className="mt-1 font-semibold text-slate-800">{ticket.clientName || '—'}</p></div>
+              <div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-green-700/70">Phone</p><p className="mt-1 font-semibold text-slate-800">{ticket.clientPhone || '—'}</p></div>
+              <div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-green-700/70">Area</p><p className="mt-1 font-semibold text-slate-800">{ticket.clientArea || '—'}</p></div>
+              <div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-green-700/70">Inquiry</p><p className="mt-1 font-semibold text-slate-800">{ticket.inquiry || '—'}</p></div>
+            </div>
+          </section>
+        )}
 
-          <div className="rounded-lg border border-border bg-card overflow-hidden">
+        <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+          {isWhatsappTicket ? (
+            <div className="flex h-screen flex-col overflow-hidden rounded-lg border border-green-200 bg-[#efeae2] shadow-sm">
+              <div className="flex items-center gap-3 border-b border-green-200 bg-green-700 px-5 py-4 text-white">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15"><MessageSquare className="h-5 w-5" /></div>
+                <div>
+                  <h2 className="text-sm font-semibold">WhatsApp conversation</h2>
+                  <p className="text-xs text-green-100">{ticket.clientName || 'Client'} · {ticket.clientPhone || 'Phone unavailable'}</p>
+                </div>
+              </div>
+
+              <div className="flex-1 space-y-3 overflow-y-auto p-5">
+                {whatsappMessages.length > 0 ? whatsappMessages.map((message) => {
+                  const isClientMessage = message.direction === 'client';
+                  const isBotMessage = message.direction === 'bot';
+                  return (
+                    <div key={message._id || `${message.createdAt}-${message.body}`} className={`flex ${isClientMessage ? 'justify-start' : 'justify-end'}`}>
+                      <div className={`max-w-[82%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${isClientMessage ? 'rounded-tl-sm bg-white text-slate-700' : isBotMessage ? 'rounded-tr-sm bg-green-100 text-green-950' : 'rounded-tr-sm bg-indigo-100 text-indigo-950'}`}>
+                        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] opacity-60">{isClientMessage ? 'Client' : isBotMessage ? 'Bot' : 'Employee'}</p>
+                        <p className="whitespace-pre-wrap leading-relaxed">{message.body}</p>
+                        <p className="mt-1 text-right text-[10px] opacity-50">{new Date(message.createdAt).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  );
+                }) : (
+                  <div className="flex h-full items-center justify-center text-sm text-slate-500">No messages yet</div>
+                )}
+              </div>
+
+              <div className="border-t border-slate-300/70 bg-[#f7f4ef] p-4">
+                <div className="flex items-end gap-3">
+                  <textarea
+                    className="min-h-12 flex-1 resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+                    placeholder="Write a WhatsApp message..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    onKeyDown={(e) => {
+                      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                        e.preventDefault();
+                        void handleSendWhatsappMessage();
+                      }
+                    }}
+                  />
+                  <button type="button" onClick={handleSendWhatsappMessage} disabled={submittingComment || !newComment.trim() || whatsappStatus?.state !== 'connected'} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-green-600 text-white shadow-sm transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40" title="Send WhatsApp message">
+                    {submittingComment ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <Send className="h-4 w-4" />}
+                  </button>
+                </div>
+                {whatsappStatus?.state && whatsappStatus.state !== 'connected' && (
+                  <p className="mt-2 text-xs text-amber-700">WhatsApp is {whatsappStatus.state.replace('_', ' ')}. Sending is temporarily unavailable.</p>
+                )}
+                {whatsappError && <p className="mt-2 text-xs text-red-700">{whatsappError}</p>}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 rounded-lg border border-border bg-card p-5">
+              <label className="block text-sm font-medium text-slate-700">Title</label>
+              <input
+                className="w-full rounded border border-border bg-background px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed transition"
+                value={formData.title}
+                onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                disabled={!canEdit}
+              />
+              <label className="block text-sm font-medium text-slate-700">Description</label>
+              <textarea
+                className="min-h-40 w-full rounded border border-border bg-background px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed transition"
+                value={formData.description}
+                onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                disabled={!canEdit}
+              />
+            </div>
+          )}
+
+          <div className={`rounded-lg border border-border bg-card overflow-hidden ${isWhatsappTicket ? 'lg:col-start-2 lg:row-start-1' : ''}`}>
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <div className="flex items-center gap-2">
@@ -310,10 +444,10 @@ function TicketDetailContent() {
                   <textarea
                     className="w-full min-h-19 resize-none rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition shadow-sm"
                     placeholder="Write a comment… (Ctrl+Enter to send)"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
+                    value={ticketComment}
+                    onChange={(e) => setTicketComment(e.target.value)}
                     onKeyDown={(e) => {
-                      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && newComment.trim() && !submittingComment) {
+                      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && ticketComment.trim() && !submittingTicketComment) {
                         e.preventDefault();
                         e.target.closest('div').querySelector('button').click();
                       }
@@ -322,27 +456,27 @@ function TicketDetailContent() {
                 </div>
                 <button
                   type="button"
-                  disabled={submittingComment || !newComment.trim()}
+                  disabled={submittingTicketComment || !ticketComment.trim()}
                   onClick={async () => {
-                    if (!newComment.trim()) return;
-                    setSubmittingComment(true);
+                    if (!ticketComment.trim()) return;
+                    setSubmittingTicketComment(true);
                     try {
                       await apiRequest(API_ROUTES.tickets.comments(ticketId), {
                         method: 'POST',
-                        body: { body: newComment, visibility: 'public' },
+                        body: { body: ticketComment, visibility: 'public' },
                       });
-                      setNewComment('');
+                      setTicketComment('');
                       await loadComments();
                     } catch (error) {
                       console.error('Failed to post comment', error);
                     } finally {
-                      setSubmittingComment(false);
+                      setSubmittingTicketComment(false);
                     }
                   }}
                   className="self-end flex items-center justify-center h-10 w-10 rounded-xl bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
                   title="Post comment (Ctrl+Enter)"
                 >
-                  {submittingComment ? (
+                  {submittingTicketComment ? (
                     <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                   ) : (
                     <Send className="h-4 w-4" />
@@ -351,8 +485,9 @@ function TicketDetailContent() {
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="space-y-4 rounded-lg border border-border bg-card p-5">
+        <div className={`space-y-4 rounded-lg border border-border bg-card p-5 ${isWhatsappTicket ? 'lg:col-start-2 lg:row-start-2' : ''}`}>
             <div>
               <label className="mb-1 flex items-center gap-2 text-sm font-medium text-slate-700">⚑ Status</label>
               <select
@@ -381,7 +516,7 @@ function TicketDetailContent() {
               <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-slate-500">Assignee</span><span className="font-semibold text-slate-700 text-right">{ticket.assignedTo || 'Unassigned'}</span></div>
               <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-slate-500">Department</span><span className="font-semibold text-slate-700 text-right">{ticket.assignedDepartmentId?.name || 'Unassigned'}</span></div>
             </div>
-            <div className="space-y-4 border-t border-border pt-4">
+            {!isWhatsappTicket && <div className="space-y-4 border-t border-border pt-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h4 className="text-sm font-semibold text-slate-800">Ticket Images</h4>
@@ -439,7 +574,7 @@ function TicketDetailContent() {
                   ))}
                 </div>
               )}
-            </div>
+            </div>}
             {canAssign && (
               <div className="space-y-3 pt-2 border-t border-border">
                 <div>
@@ -483,7 +618,6 @@ function TicketDetailContent() {
               <div className="flex items-center justify-between"><span className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-slate-400" /> Updated</span><span>{new Date(ticket.updatedAt).toLocaleString()}</span></div>
             </div>
           </div>
-        </div>
 
         <div className="mt-8 rounded-lg border border-border bg-card p-5">
           <h3 className="text-lg font-semibold mb-4">Ticket History</h3>

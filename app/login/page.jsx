@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { API_ROUTES, apiRequest, setStoredToken, setStoredUser } from '@/config';
-import { login, signup } from '@/lib/auth';
+import { setStoredToken, setStoredUser } from '@/config';
+import { login } from '@/lib/auth';
 
 export default function LoginPage() {
   const router = useRouter();
